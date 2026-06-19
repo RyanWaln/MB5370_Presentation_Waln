@@ -1,0 +1,31 @@
+
+# Files to ignore
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+
+# Extensions to ignore
+*.html
+*.txt
+*.png
+*.jpg
+*.jpeg
+*.eps
+*.pdf
+*.bmp
+*.svg
+*.tiff
+*.Rproj
+
+# Folders to ignore
+archive/
+scratch/
+test/
+Class Code/
+
+# Keywords to ignore
+*archive
+.httr-oauth
+.quarto
