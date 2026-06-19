@@ -1,0 +1,35 @@
+Metadata for summarised data that informs the annual MMP report to GBRMPA. This metadata is specifically for the annually updated MMP Coral data file 'Coral.csv'.,
+Field_Name,Descriptor
+P_CODE,"Project Code - AIMS use. Denotes survey program - for the MMP the P_CODE is IN for Inshore monitoring, RM is the Long-term Monitoring program (LTMP)"
+NRM_REGION,One of four Natural Resource Management Regions currently in the MMP.
+REEF,"Name of reef within the MMP monitoring program. At each reef there are two sites with similar aspect separated by at least 250m. Where the extension of reefal habitat is limited and it is not possible to establish two sites on the same reef, the second site is established on the next adjacent reef with appropriate habitat. For the MMP, sites on the western sides of Orpheus and Pelorus islands are combined as Palms West. Sites on the southern sides of Humpy and Halfway islands are combined as Keppels South."
+DEPTH,"Depth (m) below lowest astronomical tide (LAT) of the transects. Two depths (2m, 5m) per site, two sites per reef. The transects follow the contours of the reef at either 2m or 5m below datum."
+VISIT_NO,Sampling year code used for aggregating data. Ranging from Vist 1 = 2005 through to current visit. Note - reefs included from the LTMP surveys belong to a longer time series - double check with 'yr' when comparing.
+LATITUDE,Latitude of the monitored community in decimal degrees
+LONGITUDE,Longitude of the monitored community in decimal degrees
+Date,Date of sampling: dd/mm/yyyy
+subregion,"Sub-region of NRM. Wet Tropics has three sub-regions: Daintree, Russell-Mulgrave, and Tully"
+A,"% algae cover (combined all algal forms including filamentous turf algae, fleshy macroalgae, and calcareous algae)"
+AB,"% abiotic cover. For example; sand, silt, rubble, all without filamentous algae, and all unable to support settlement of coral larvae. "
+HC,% hard coral cover (Order Scleractinia)
+SC,% soft coral cover (Order Alcyonacea and Helioporacea)
+CoralCover,% cover - combined HC and SC
+MA,% cover of fleshy macroalgae
+ST,"% cover of transient silt. Transient silt is defined as being a temporary accumulation of fine grain silt (<63um), easily displaced to make the underlying substrate available for coral settlement."
+Acr,% cover of Family Acroporidae as a subset of overall hard coral cover (HC)
+,"Note % - percentage cover. Unless otherwise indicated, the percent cover is based on the proportional representation of the nominated categories (A, AB, HC, SC, CoralCover, MA, ST, Acr) among all points of each transect, averaged across all five transects and averaged across both sites for any given depth. Methodology is outlined in the annual Marine Monitoring Program Reports (i.e. Report for inshore coral monitoring 2019-2020) and adapted from Jonker et al 2008. Note: The catagory 'OT' (Other) that represents benthic taxa (e.g. tunicates, anemones, bivalves, etc.) is not a catagory nominated for the annual reporting process and so is not included the data file 'coral.csv'. "
+RANK,Identifies the most relevant disturbance to a benthic community where there is more than one disturbance in a given year
+DISTURBANCE,"Nominated cause of observed impacts to the benthic community where c= Acanthaster cf solaris,  d = disease,  s = storm or cyclone, and n = no disturbance. "
+STORM_NAME,Name of the cyclone
+DISTURBANCE_DATE,Impact date of cyclone or storm
+juv5.d.nf,Density of juvenile corals (<5cm length) per metre square of available space represented by the amount of total algae cover in the transects. Solitatry Fungiidae are excluded.
+MAprop,The proportional representation of macroalgae among all algae
+yr,The year in which the survey took place
+DateRange,A four year range across which the Change.score is estimatd.
+NumYearsInRange,The number of survey years within a given date range
+Change.score.linear.mean,The average score for changes in card coral covr across the DateRange. Reference Thompson et al 2016.
+CoralCover.score,"A numeric score for the combined cover of hard (HC) and soft (SC) corals, covers between 0 and 75% are scoled between 0 and 1, covers >75% are scored 1. For detail see Thompson et al 2016"
+juv.score,"Juvenile indicator score,  rescales the density of juvenile hard corals  (< 5cm) from 0 to 13 (or more) colonies per square m of availble substrate to the range 0 to 1."
+ma.score,"Macroalgae indicator score, rescales the Maprop to a range of 0 to 1 based on threshholds based on the ratio of MAprop to reef and depth specific predictions of MAprop. See Thompson et al 2015"
+gen.composition,A metric of coral community composition. Derived from the sum of genus scores for each reef and depth. Genus scores are the product of genus cover and genus eignevalue from a constrained ordination  from Thompson et al 2014b.
+composition.score,"Composition indictor score, values 0, 0.5, and 1, representing below, within, and above the 95% confidence intervals for gen.composition over the first five years of the study. See Thompson et al 2015"
