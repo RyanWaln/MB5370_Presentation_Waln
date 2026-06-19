@@ -22,3 +22,7 @@ objects()
 #   Each value must have its own cell.
 
 #   ALWAYS: Put each dataset in a tibble and each variable in a column.
+
+
+# Have github start tracking files
+usethis::use_github() 
