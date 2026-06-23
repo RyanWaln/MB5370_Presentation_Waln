@@ -1,23 +1,23 @@
----
+# ══════════════════════════════════════════════════════════════
 #  title:  MB5370 Presentation - Data Wrangling & Mapping
 #  author: Ryan Waln
 #  date:   `r format(Sys.time(), '%d %B, %Y')`
----
+# ══════════════════════════════════════════════════════════════
 
 # Introduction
 
-  # This file formats AIMS coral data to produce:
-#   Figure 1 – coral.csv   (AIMS Report 2024,  surveys up to 2024)
-#   Figure 2 – all.reef.csv (AIMS Resilience DB, surveys up to 2017)
-#
+  # This file formats AIMS coral data to produce a map showing the
+# 
 # Both maps show each reef × depth site as a dot coloured by the
 # LATEST hard coral cover (HC), with a label showing the average
 # annual change in HC across all sampling periods.
 
-# ── Housekeeping ──────────────────────────────────────────────
-  rm(list = ls())
+  
+# Housekeeping
 
-# ── Libraries ─────────────────────────────────────────────────
+rm(list = ls())
+
+# Libraries
 library(here)
 library(tidyverse)
 library(sf)
@@ -36,9 +36,10 @@ all_reefs <- read_csv(here("data/AIMS_Enviornmental_Data/Coral-Index-Reef-Resili
 # ══════════════════════════════════════════════════════════════
 #  2.  FILL MISSING COORDINATES IN coral
 # ══════════════════════════════════════════════════════════════
-# Coordinates differ slightly between depth strata on the same
-# reef (different survey spots), so we group by REEF × DEPTH
-# and fill NAs with the mean of the known values in that group.
+# Coordinates differ slightly between sampling depth on the same 
+#reef (different survey spots), so best approach is to group by REEF × DEPTH
+# and fill NAs with the mean of the coordinates. 
+# This works because the coordinates are the same for a given reef
 
 cat("── coral: coordinate fill ──────────────────\n")
 cat("Before  NA LATITUDE :", sum(is.na(coral$LATITUDE)),  "\n")
@@ -52,6 +53,7 @@ coral <- coral |>
   ) |>
   ungroup()
 
+## Report any rows that weren't filled 
 still_na <- coral |>
   filter(is.na(LATITUDE) | is.na(LONGITUDE)) |>
   distinct(REEF, DEPTH)
@@ -59,6 +61,7 @@ still_na <- coral |>
 cat("After   NA LATITUDE :", sum(is.na(coral$LATITUDE)),  "\n")
 cat("After   NA LONGITUDE:", sum(is.na(coral$LONGITUDE)), "\n")
 
+# Set up for loop to check if all NA's are filled
 if (nrow(still_na) > 0) {
   cat("Sites with NO known coordinates (excluded from map):\n")
   print(still_na)
@@ -70,7 +73,7 @@ if (nrow(still_na) > 0) {
 # ══════════════════════════════════════════════════════════════
 #  3.  MERGE COORDINATES INTO all_reefs
 # ══════════════════════════════════════════════════════════════
-# all_reefs has no coordinate columns — borrow them from coral
+# all_reefs did not take coordinates when measuring, so must borrow them from coral data
 # using REEF × DEPTH as the lookup key.
 
 coord_lookup <- coral |>
@@ -118,7 +121,7 @@ coral_summary <- coral |>
                    round(avg_HC_change, 1), "% yr⁻¹")
   )
 
-
+coral_summary
 ## ── 4b.  all_reefs summary ───────────────────────────────────
 # all_reefs has no year column — parse it from Date first.
 all_reefs <- all_reefs |>
@@ -137,7 +140,7 @@ all_reefs_summary <- all_reefs |>
                    round(avg_HC_change, 1), "% yr⁻¹")
   )
 
-
+all_reefs_summary
 # ══════════════════════════════════════════════════════════════
 #  5.  CONVERT TO sf OBJECTS
 # ══════════════════════════════════════════════════════════════
@@ -167,7 +170,7 @@ hc_scale <- tm_scale_continuous(
   limits   = c(0, 100)              # fix colour scale across both maps
 )
 
-tmap_mode("view")   # interactive; switch to "plot" for static export
+tmap_mode("view")   # interactive; switch to "plot" to export
 
 
 # ══════════════════════════════════════════════════════════════
