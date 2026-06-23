@@ -38,3 +38,23 @@ objects()
 # Packages
 library(tidyverse)
 ```
+
+
+```{r}
+library(sf)
+library(tmap)
+library(ozmaps)
+library(dplyr)
+
+# Get Queensland outline
+qld <- ozmap_states |> filter(NAME == "Queensland")
+
+tm_shape(qld) +
+  tm_borders(col = "black", lwd = 0.8) +
+  tm_fill(col = "lightgoldenrodyellow") +
+  tm_layout(title = "Queensland Coast", frame = FALSE)
+```
+```{r}
+
+```
+
