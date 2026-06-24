@@ -1,8 +1,8 @@
----
-  #title: "MB5370 Presentation Waln"
-  #author: "Ryan Waln"
-  #date: "`r format(Sys.time(), '%d %B, %Y')`"
----
+# ══════════════════════════════════════════════════════════════
+#  title:  MB5370 Presentation - Data Wrangling & Mapping
+#  author: Ryan Waln
+#  date:   `r format(Sys.time(), '%d %B, %Y')`
+# ══════════════════════════════════════════════════════════════
   ## Introduction
   
   # This file is meant to format the AIMs coral data for the class project 
