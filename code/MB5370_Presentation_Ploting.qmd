@@ -44,6 +44,7 @@ objects()
 
 ```{r}
 # Packages
+library(here)
 library(tidyverse)
 library(sf)
 library(tmap)
@@ -60,6 +61,7 @@ source("../code/test.R")
 ```{r}
 # use st_as_sf() to turn data frame into a spatial object to account for earth's curvature
 # use CRS(4326 = WGS84) for Australia
+# Note: Better to convert to spatial object on qmd file in order to play around with jittering for figures
 
 all_reefs_sf <- st_as_sf(
   all_reefs_summary,
@@ -78,6 +80,19 @@ all_reefs_sf <- st_jitter(all_reefs_sf, amount = 0.1)  # add in jittering to red
 qld <- ozmap_states |>                         # All Aus. state polygons
   filter(NAME == "Queensland") |>              # keep only the QLD polygon
   st_transform(crs = 4326)                     # switch to WGS84 to match reef points
+```
+
+## DEFINE MAJOR COASTAL CITY LOCATIONS
+```{r}
+# Hard-code coordinates for the major cities along the GBR coast.
+# Coordinates are approximate city-centre positions in WGS84.
+
+cities <- data.frame(
+  name      = c("Cairns", "Townsville", "Mackay", "Rockhampton"),
+  longitude = c(145.77,    146.82,       149.18,   150.51),
+  latitude  = c(-16.92,   -19.26,       -21.14,   -23.38)
+) |>
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)  # convert to sf point object
 ```
 
 ## SHARED MAP SETTINGS
@@ -105,12 +120,26 @@ fig1 <- tm_shape(qld, bbox = bbox_reefs) +          # draw QLD coastline, croppe
     col        = land_style$border.col, # polygon border color
     lwd        = land_style$lwd         # border line width
   ) +
+  tm_shape(cities) +                   # overlay city point locations
+  tm_dots(
+    fill = "black",                    # Display center of city as black dot
+    size = 0.2                         # Set size of city dot
+  ) +
+  tm_shape(cities) +                   # repeat tm_shape so tm_text knows which layer to label
+  tm_text(
+    text     = "name",                 # set labels to use column with city names
+    size     = 0.6,
+    col      = "black",
+    fontface = "bold",
+    xmod     = -2.5,                   # negative value nudges label to the LEFT of the dot
+    ymod     = -0.5                     # slight downward offset to sit beside rather than on the dot
+  ) +
   tm_shape(all_reefs_sf) +             # overlay the reef point layer
   tm_symbols(
     shape       = 21,                   # R point shape 21: filled circle with border to represent sample sites
     fill        = "earliest_HC",        # color dot interior by earliest HC value
     fill.scale  = tm_scale_continuous(
-      values = "viridis-",       # color blind friendly palette (low to high cover)
+      values = "brewer.rd_bu",       # color blind friendly palette (low to high cover)
       limits = c(0, 100)                # fix scale 0–100% so all figures are comparable
     ),
     fill.legend = tm_legend(
@@ -126,7 +155,6 @@ fig1 <- tm_shape(qld, bbox = bbox_reefs) +          # draw QLD coastline, croppe
   tmap_style("natural")                                 # set style 
 
 fig1   # display figure
-
 ```
 
 ##  FIGURE 2 – LATEST HC COVER
@@ -137,19 +165,24 @@ fig2 <- tm_shape(qld, bbox = bbox_reefs) + # draw QLD coastline, cropped to reef
     col  = land_style$border.col,       # polygon border colour
     lwd  = land_style$lwd               # border line width
   ) +
+  tm_shape(cities) +                   # overlay city point locations
+  tm_dots(fill = "black", size = 0.2) + # Display center of city as black dot 
+  tm_shape(cities) +                   # repeat tm_shape so tm_text knows which layer to label
+  tm_text(text = "name", size = 0.6, col = "black", fontface = "bold",
+          xmod = -2.5, ymod = -0.5) +  # label placement next to dot
   tm_shape(all_reefs_sf) +            # overlay the reef point layer
   tm_symbols(
     shape       = 21,                   # filled circle with border
     fill        = "latest_HC",          # color dot interior by the most recent HC value
     fill.scale  = tm_scale_continuous(
-      values = "viridis-",        # color blind friendly palette (low to high cover)
+      values = "brewer.rd_bu",        # color blind friendly palette (low to high cover)
       limits = c(0, 100)          # fix scale 0–100% so all figures are comparable
     ),
     fill.legend = tm_legend(
       title    = "2024 Hard Coral Cover (%)",
       position = c("right", "top")      # legend inside the plot, top-right corner
     ),
-    col  = "black",                    # dot border (outline) colour
+    col  = "black",                    # dot border (outline) color
     lwd  = 0.7,                         # dot border width
     
   ) +
@@ -163,23 +196,23 @@ fig2
 
 #   FIGURE 3 – AVERAGE RATE OF CHANGE IN HC
 ```{r}
-# Strategy:
-#   • Split into decrease (avg_HC_change < 0) and increase (avg_HC_change ≥ 0) subsets
-#   • Map the raw slope to a diverging colour palette using tm_scale_continuous()
-#     with a midpoint at 0; dark-red = large decrease, light-yellow/green = large increase
-
 fig3 <- tm_shape(qld, bbox = bbox_reefs) +
   tm_polygons(
     fill = land_style$col,              # solid land fill colour
     col  = land_style$border.col,       # polygon border colour
     lwd  = land_style$lwd               # border line width
   ) +
+  tm_shape(cities) +                   # overlay city point locations
+  tm_dots(fill = "black", size = 0.2) + # Display center of city as black dot
+  tm_shape(cities) +                   # repeat tm_shape so tm_text knows which layer to label
+  tm_text(text = "name", size = 0.6, col = "black", fontface = "bold",
+          xmod = -2.5, ymod = -0.5) +  # label placement next to dot
   tm_shape(all_reefs_sf) +
   tm_symbols(
     shape      = 21,                 # filled circle with border
     fill       = "avg_HC_change",
     fill.scale = tm_scale_continuous(
-      values  = "RdBu",   # Red (decrease), White (≈0), Blue (increase)
+      values  = "brewer.rd_bu",   # Red (decrease), White (≈0), Blue (increase)
       midpoint = 0,                  # anchor the colour midpoint at zero change
       limits  = c(                   # symmetric limits centred on 0 for fair comparison
         -max(abs(all_reefs_summary$avg_HC_change), na.rm = TRUE),
@@ -187,7 +220,7 @@ fig3 <- tm_shape(qld, bbox = bbox_reefs) +
       )
     ),
     fill.legend = tm_legend(
-      title    = "Annual Avg % HC Change\nDark = decrease\nLight = increase",
+      title    = "Annual Avg % HC Change",
       position = c("right", "top")   # legend inside the plot, top-right corner
     ),
     col  = "black",                 # dot border (outline) color
@@ -227,4 +260,3 @@ tmap_save(
   width = 8, height = 12, dpi = 300
 )
 ```
-

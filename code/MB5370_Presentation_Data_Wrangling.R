@@ -24,7 +24,6 @@ library(here)
 library(tidyverse)  
 library(sf)         
 
-  
 ## Rules for tidy data:
 
 #   Each variable must have its own column.
@@ -39,8 +38,3 @@ library(sf)
 #    TESTING
 # ══════════════════════════════════════════════════════════════
 
-# Hard coral cover by region
-
-ggplot(coral, aes(x = NRM_REGION, y = HC)) + stat_smooth() + geom_boxplot()
-
-ggplot(all_reefs) + aes(x = LONGITUDE, y = LATITUDE, color = HC ) + geom_point()

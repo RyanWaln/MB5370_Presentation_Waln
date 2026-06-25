@@ -11,6 +11,7 @@
 # This script formats the AIMS coral monitoring data in the following ways: 
 
 ## Fills missing coordinates and merges coordinates from the coral dataset into the all_reefs dataset
+## Merges annual discharge data into all_reefs dataset by sub region
 ## Extracts year each site was surveyed for each visit
 ## Calculates the average annual change in hard coral cover for each sampling site 
 ## Creates summary tables for hard coral cover of each site at the start and end of the survey period
@@ -27,12 +28,17 @@ library(sf)
 
 # Import Data
 
-## all_reef.csv – AIMS Resilience database; contains HC measures but no coordinates
+## all.reef.csv: contains HC (hard coral cover) measures 
 all_reefs <- read_csv(
   here("data/AIMS_Enviornmental_Data/Coral-Index-Reef-Resilience_AIMS_20200522/all.reef.csv"))
 
-## coral.csv  – AIMS 2024 report data; contains geographic coordinates of reefs
+## coral.csv: contains geographic coordinates of reefs
 coral <- read_csv(here("data/AIMS_Report_2024/coral.csv"))
+
+## discharge.annual: contains total annual discharge (Mega Liters) of all rivers in subregion  
+discharge_annual <- read_csv(
+  here("data/AIMS_Enviornmental_Data/Coral-Index-Reef-Resilience_AIMS_20200522/discharge.annual.csv"))
+
 
 # ══════════════════════════════════════════════════════════════
 #    FILL MISSING COORDINATES IN coral
@@ -73,6 +79,16 @@ if (nrow(still_na) > 0) {
 }
 
 # ══════════════════════════════════════════════════════════════
+#    EXTRACT YEAR FROM all_reefs
+# ══════════════════════════════════════════════════════════════
+# The Date column in all_reefs is stored as DD/MM/YYYY 
+# Sampling occurs once a year so must extract the numeric year.
+# Will also need to set to year before merging discharge_annual which only recorded year
+
+all_reefs <- all_reefs |>
+  mutate(yr = year(dmy(Date)))   # dmy() breaks up day-month-year strings while year() extracts year
+
+# ══════════════════════════════════════════════════════════════
 #    MERGE COORIDINATES INTO all_reefs
 # ══════════════════════════════════════════════════════════════
 # all_reefs has no geographic coordinates, so must merge with coral dataset.
@@ -94,13 +110,24 @@ all_reefs <- all_reefs |>
   left_join(coord_lookup, by = c("REEF", "DEPTH"))
 
 # ══════════════════════════════════════════════════════════════
-#    EXTRACT YEAR FROM all_reefs
+#    MERGE ANNUAL DISCHARGE INTO all_reefs
 # ══════════════════════════════════════════════════════════════
-# The Date column in all_reefs is stored as DD/MM/YYYY 
-# Sampling occurs once a year so must extract the numeric year.
+# discharge_annual values listed by subregion which is also a column in all_reefs
+# merge by shared column and year
+
+# Rename columns to match all_reefs before joining:
+#   "Year" to "yr" so it aligns with the yr column extracted above
+discharge_annual <- discharge_annual |>
+  rename( yr = Year)  # match the year column name used in all_reefs
+
+# Left-join onto all_reefs by subregion and year.
 
 all_reefs <- all_reefs |>
-  mutate(yr = year(dmy(Date)))   # dmy() breaks up day-month-year strings while year() extracts year
+  left_join(discharge_annual, by = c("subregion", "yr")) # match on both subregion and year
+
+# Data limitations: years before 2005 or after 2018 will receive NA for discharge_annual
+
+print(all_reefs)
 
 # ══════════════════════════════════════════════════════════════
 #    CALCULATE AVERAGE CHANGE IN HC (hard coral cover)
