@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════════
-#  title:  MB5370 Presentation - Data Wrangling & Mapping
+#  title:  MB5370 Presentation: Data Wrangling
 #  author: Ryan Waln
 #  date:   `r format(Sys.time(), '%d %B, %Y')`
 # ══════════════════════════════════════════════════════════════
@@ -38,7 +38,6 @@ coral <- read_csv(here("data/AIMS_Report_2024/coral.csv"))
 ## discharge.annual: contains total annual discharge (Mega Liters) of all rivers in subregion  
 discharge_annual <- read_csv(
   here("data/AIMS_Enviornmental_Data/Coral-Index-Reef-Resilience_AIMS_20200522/discharge.annual.csv"))
-
 
 # ══════════════════════════════════════════════════════════════
 #    FILL MISSING COORDINATES IN coral
@@ -129,6 +128,24 @@ all_reefs <- all_reefs |>
 
 print(all_reefs)
 
+
+# ══════════════════════════════════════════════════════════════
+#   CREATE DATASET TO COMPARE ANNUAL DISCHARGE TO HC
+# ══════════════════════════════════════════════════════════════
+# Need to aggregate all_reefs to the NMR × year level so each row is one NRM region in one year, 
+# with mean HC cover and total annual discharge.
+
+discharge_HC <- all_reefs |>
+  filter(!is.na(discharge.c.annual), !is.na(HC), !is.na(NRM_REGION)) |>  # drop rows with NA values
+  group_by(NRM_REGION, yr) |>                         # group by region and year
+  summarise(
+    mean_HC      = mean(HC, na.rm = TRUE),        # mean HC cover across all sites in that NRM region × year
+    total_discharge = first(discharge.c.annual),  # discharge is the same for all rows, so just take the first value
+    .groups = "drop"
+  )
+
+print(discharge_HC)   # check structure 
+
 # ══════════════════════════════════════════════════════════════
 #    CALCULATE AVERAGE CHANGE IN HC (hard coral cover)
 # ══════════════════════════════════════════════════════════════
@@ -142,7 +159,7 @@ lm_slope <- function(x, y) {
 }
 
 # ══════════════════════════════════════════════════════════════
-#    BUILD SUMMARY TABLES FOR all_reefs TO USE FOR PLOTTING
+#    BUILD SUMMARY TABLES FOR all_reefs TO USE FOR MAP PLOTTING
 # ══════════════════════════════════════════════════════════════
 ##   earliest_HC:   HC in the starting year
 ##   latest_HC:     HC in the most recent year
@@ -164,7 +181,7 @@ all_reefs_summary <- all_reefs |>
     .groups = "drop"
   ) |>
   mutate(
-    # Add columns for colouring scheme in Fig 3 to help denote HC change
+    # Add columns for coloring scheme in Fig 3 to help denote HC change
     change_dir = case_when(
       avg_HC_change > 0  ~ "Increase",
       avg_HC_change < 0  ~ "Decrease",

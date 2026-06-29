@@ -22,13 +22,17 @@ editor_options:
 
 This document is used in conjunction with the associated data wrangling script 
 to produce figures from the all_reefs data to visualize changes in hard coral cover, 
-explore how these changes relate to environmental parameters, and if there are any resilience trends
+and explore how these changes relate to the annual discharge of all rivers in NRM regions
 
 Figures plotted include: 
 
-- Fig 1: Earliest HC cover in the first year where ALL reefs have a measurement
-- Fig 2: Current HC cover per reef site
-- Fig 3: Dot-size proportional to avg HC change with color showing increase vs. decrease
+- Fig 1: Map of sample sites with starting HC cover (first year where ALL reefs have a measurement)
+- Fig 2: Map of sample sites with latest HC cover
+- Fig 3: Map of sample sites with avg % HC change over course of survey data 
+- Fig 4: Box plot of HC cover across NRM regions at start of survey
+- Fig 5: Box plot of HC cover across NRM regions at end of survey
+- Fig 6: Bar chart of average % HC change across NRM regions 
+- Fig 7: Scatter plot of annual discharge vs HC by NRM region 
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 # R Setup & housekeeping
@@ -54,7 +58,7 @@ library(ozmaps)
 
 ## SOURCE SCRIPT FOR DATA WRANGLING
 ```{r}
-source("../code/test.R")
+source("../code/MB5370_Presentation_Data_Wrangling.R")
 ```
 
 ## CONVERT SUMMARY TABLE TO sf SPATIAL OBJECT
@@ -69,7 +73,7 @@ all_reefs_sf <- st_as_sf(
   crs    = 4326                          # WGS84 geographic coordinate system
 )
 
-all_reefs_sf <- st_jitter(all_reefs_sf, amount = 0.1)  # add in jittering to reduce overlap of points
+all_reefs_sf <- st_jitter(all_reefs_sf, amount = 0.05)  # add in jittering to reduce overlap of points
 
 ```
 
@@ -77,7 +81,7 @@ all_reefs_sf <- st_jitter(all_reefs_sf, amount = 0.1)  # add in jittering to red
 ```{r}
 # Can use built in dataset to load in QLD coastline to lay sampling sites over
 
-qld <- ozmap_states |>                         # All Aus. state polygons
+qld <- ozmap_states |>                         # all Aus. state polygons
   filter(NAME == "Queensland") |>              # keep only the QLD polygon
   st_transform(crs = 4326)                     # switch to WGS84 to match reef points
 ```
@@ -85,7 +89,7 @@ qld <- ozmap_states |>                         # All Aus. state polygons
 ## DEFINE MAJOR COASTAL CITY LOCATIONS
 ```{r}
 # Hard-code coordinates for the major cities along the GBR coast.
-# Coordinates are approximate city-centre positions in WGS84.
+# Coordinates are approximate city-center positions in WGS84.
 
 cities <- data.frame(
   name      = c("Cairns", "Townsville", "Mackay", "Rockhampton"),
@@ -103,17 +107,16 @@ tmap_mode("plot")   # "plot" for saving figures; use "view" for interactive mode
 # Bounding box derived from the reef points: used to frame all three maps
 bbox_reefs <- st_bbox(all_reefs_sf)
 
-# Common land polygon style applied to every figure
+# Polygon style of coast applied to every figure
 land_style <- list(
-  col        = "lightgray",  # fill colour for the Queensland Coast
-  border.col = "grey40",                # outline colour
+  col        = "lightgray",  # fill color for the Queensland Coast
+  border.col = "grey40",                # outline color
   lwd        = 0.6                      # outline line width
 )
 ```
 
-## FIGURE 1 – STARTING HC COVER
+## FIGURE 1 – MAP OF STARTING HC COVER
 ```{r}
-
 fig1 <- tm_shape(qld, bbox = bbox_reefs) +          # draw QLD coastline, cropped to reef extent
   tm_polygons(
     fill       = land_style$col,        # solid land fill color
@@ -157,7 +160,7 @@ fig1 <- tm_shape(qld, bbox = bbox_reefs) +          # draw QLD coastline, croppe
 fig1   # display figure
 ```
 
-##  FIGURE 2 – LATEST HC COVER
+## FIGURE 2 – MAP OF LATEST HC COVER 
 ```{r}
 fig2 <- tm_shape(qld, bbox = bbox_reefs) + # draw QLD coastline, cropped to reef extent
   tm_polygons(
@@ -194,16 +197,16 @@ fig2
 
 ```
 
-#   FIGURE 3 – AVERAGE RATE OF CHANGE IN HC
+## FIGURE 3 – MAP OF AVERAGE RATE OF CHANGE IN HC
 ```{r}
 fig3 <- tm_shape(qld, bbox = bbox_reefs) +
   tm_polygons(
-    fill = land_style$col,              # solid land fill colour
-    col  = land_style$border.col,       # polygon border colour
+    fill = land_style$col,              # solid land fill color
+    col  = land_style$border.col,       # polygon border color
     lwd  = land_style$lwd               # border line width
   ) +
   tm_shape(cities) +                   # overlay city point locations
-  tm_dots(fill = "black", size = 0.2) + # Display center of city as black dot
+  tm_dots(fill = "black", size = 0.2) + # display center of city as black dot
   tm_shape(cities) +                   # repeat tm_shape so tm_text knows which layer to label
   tm_text(text = "name", size = 0.6, col = "black", fontface = "bold",
           xmod = -2.5, ymod = -0.5) +  # label placement next to dot
@@ -213,22 +216,18 @@ fig3 <- tm_shape(qld, bbox = bbox_reefs) +
     fill       = "avg_HC_change",
     fill.scale = tm_scale_continuous(
       values  = "brewer.rd_bu",   # Red (decrease), White (≈0), Blue (increase)
-      midpoint = 0,                  # anchor the colour midpoint at zero change
-      limits  = c(                   # symmetric limits centred on 0 for fair comparison
+      midpoint = 0,                  # anchor the color midpoint at zero change
+      limits  = c(                   # symmetric limits centered on 0 for fair comparison
         -max(abs(all_reefs_summary$avg_HC_change), na.rm = TRUE),
         max(abs(all_reefs_summary$avg_HC_change), na.rm = TRUE)
       )
     ),
     fill.legend = tm_legend(
-      title    = "Annual Avg % HC Change",
+      title    = "Mean Annual % Change in HC",
       position = c("right", "top")   # legend inside the plot, top-right corner
     ),
     col  = "black",                 # dot border (outline) color
     lwd  = 0.7,                      # dot border width
-    size.legend = tm_legend(
-      title    = "|Change| (annual %HC change )",
-      position = c("right", "top")   # keep size legend in the same corner
-    )
   ) +
   tm_scalebar(position = c("left", "bottom")) +
   tm_compass(position  = c("right", "top"), size = 1) +
@@ -236,11 +235,201 @@ fig3 <- tm_shape(qld, bbox = bbox_reefs) +
 
 fig3
 ```
+## FIGURE 4 – BOXPLOT OF STARTING HC COVER BY NRM REGION 
+````{r}
+fig4 <- ggplot(all_reefs_summary, aes(x = NRM_REGION,  # Plot earliest HC cover arranged by NRM region
+                               y =  earliest_HC,
+                               fill = NRM_REGION)) +           # color each region's box differently
+  geom_boxplot(
+    outlier.size  = 0.8,        # set size of outlier dots 
+    outlier.alpha = 0.4,        # make outliers semi-transparent
+    width         = 0.6         # set width of boxes
+  ) +
+  scale_fill_brewer(palette = "Set2") +   # colorblind-friendly palette
+  scale_y_continuous(limits = c(0, 90))+   # set y axis from 0 to 90% to standardize range between 2 boxplots
+  labs(
+    x        = NULL,            # don't need x axis label with region labels
+    y        = "Hard Coral Cover (%)",
+    fill     = "NRM Region"
+  ) +
+  theme_bw() +                  # add grid lines 
+  theme(
+    legend.position = "none",   # don't need legend
+    axis.text.y     = element_text(size = 10)   # edit text for region labels
+  )
 
-#  SAVE FIGURES
+fig4   
+````
+
+## FIGURE 5 – BOXPLOT OF LATEST HC COVER BY NRM REGION 
 ```{r}
+fig5 <- ggplot(all_reefs_summary, aes(x = NRM_REGION,  # Plot latest HC cover arranged by NRM region
+                               y =  latest_HC,
+                               fill = NRM_REGION)) +           # color each region's box differently
+  geom_boxplot(
+    outlier.size  = 0.8,        # set size of outlier dots 
+    outlier.alpha = 0.4,        # make outliers semi-transparent
+    width         = 0.6         # set width of boxes
+  ) +
+  scale_fill_brewer(palette = "Set2") +   # colorblind-friendly palette
+  scale_y_continuous(limits = c(0, 90))+   # set y axis from 0 to 80%
+  labs(
+    x        = NULL,            # don't need x axis label with region labels
+    y        = "Hard Coral Cover (%)",
+    fill     = "NRM Region"
+  ) +
+  theme_bw() +                  # add grid lines 
+  theme(
+    legend.position = "none",   # don't need legend
+    axis.text.y     = element_text(size = 10)   # edit text for region labels
+  )
 
-# Width = 8 inches, Height = 12 inches, DPI = 300 → publication-quality output
+fig5   
+```
+
+## FIGURE 6 – BAR CHART OF AVERAGE CHANGE IN HC BY NRM REGION
+```{r}
+# Summarize the per-site avg_HC_change values from all_reefs_summary
+# into a single mean ± SE for each NRM region.
+fig6_data <- all_reefs_summary |>
+  group_by(NRM_REGION) |>
+  summarise(
+    mean_change = mean(avg_HC_change),            # mean annual HC change across all sites in region
+    se_change   = sd(avg_HC_change) / sqrt(n()),  # standard error for error bars
+    n_sites     = n(),                             # record sample size for label
+    .groups     = "drop"
+  ) |>
+  mutate(
+    # Tag each region as net gain or net loss for color coding
+    direction = if_else(mean_change >= 0, "Increase", "Decrease")
+  )
+
+fig6 <- ggplot(fig6_data,
+               aes(x     = reorder(NRM_REGION, mean_change),  # order regions from largest to smallest decrease for visual design
+                   y     = mean_change,
+                   fill  = direction)) +                       # color bars by direction of change
+  geom_col(width = 0.65) +                  # geom_col uses the y value directly (not counts)
+  geom_errorbar(
+    aes(ymin = mean_change - se_change,     # lower bound of error bar
+        ymax = mean_change + se_change),    # upper bound of error bar
+    width = 0.25,                           # set width of the error bars
+    colour = "grey30"                       # color error bars
+  ) +
+  geom_hline(yintercept = 0,               # reference line at zero to clearly separate gain from loss
+             linetype = "dashed",
+             colour   = "black",
+             linewidth = 0.5) +
+  geom_text(
+    aes(label = paste0("n = ", n_sites)),   # annotate each bar with its sample size
+    hjust  = -0.5,  # Move label horizontally
+    vjust  = 1.8,   # Move label vertically 
+    size   = 3.2,
+    colour = "grey20"
+  ) +
+ 
+  scale_fill_manual(
+    values = c("Increase" = "#2166AC",      # blue for positive change
+               "Decrease" = "#D6604D")      # red for negative change
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0.15, 0.2)) # adds padding so the n= labels don't get clipped
+  ) +
+  labs(
+    
+    x        = NULL,                        # don't need x axis labels
+    y        = "Mean Annual % Change in HC (± SE)",
+    fill     = NULL                         # don't need coloring between NRM regions 
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "none",             # don't need legend
+    axis.text.y     = element_text(size = 10)
+  )
+
+fig6  
+```
+
+## FIGURE 7 – SCATTER PLOT OF ANNUAL DISCHARGE vs HC COVER BY NRM REGION
+````{r}
+# Each point is one NMR-year observation.
+# A linear regression line is fitted per NRM region (using geom_smooth)
+# to show whether higher discharge years correspond to lower HC cover within each region.
+# facet_wrap splits the plot into one panel per NRM region for easier comparison.
+
+fig7 <- ggplot(discharge_HC,
+               aes(x = total_discharge,   # x-axis: annual discharge (Mega Liters)
+                   y = mean_HC)) +         # y-axis: mean HC cover (%) in that NRM region-year
+  geom_point(
+    aes(colour = NRM_REGION),             # color points by region
+    alpha = 0.6,                           # semi-transparent so overlapping points are visible
+    size  = 2
+  ) +
+  geom_smooth(
+    method  = "lm",                        # fit a linear regression line per panel to find any trends
+    se      = TRUE,                        # show 95% confidence interval ribbon around the line
+    colour  = "grey20",linewidth = 0.8     # set line color and width 
+  ) +
+  facet_wrap(~ NRM_REGION,                # one panel per NRM region
+             scales = "free_x") +          # put x-axis scale on each panel
+  
+  scale_colour_brewer(palette = "Set2") +  # colorblind-friendly palette matching other figures
+  scale_x_continuous(
+    labels = scales::label_comma()         # add commas to large discharge numbers 
+  ) +
+  labs(
+    title  = "Annual River Discharge vs Hard Coral Cover by NRM Region",
+    subtitle = "Each point = one subregion × year; line = linear regression with 95% CI",
+    x      = "Total Annual Discharge (ML)",
+    y      = "Mean Hard Coral Cover (%)"
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "none",             # region label is already on each facet panel
+    strip.text      = element_text(face = "bold", size = 10),  # bold facet panel titles
+    axis.text.x     = element_text(angle = 30, hjust = 1)      # angle x-axis labels to prevent overlap
+  )
+
+fig7
+````
+
+
+## STATISTICAL ANALYSIS – DISCHARGE vs HC COVER BY NRM REGION
+```{r}
+# Run a simple linear regression on mean_HC vs total_discharge
+# for each NRM region and extract the key statistics:
+#   - Pearson correlation coefficient (r)
+#   - regression slope (β) and its p-value
+#   - R² (proportion of variance in HC explained by discharge)
+# This gives a formal test of whether discharge predicts HC cover within each region.
+
+discharge_stats <- discharge_HC |>
+  group_by(NRM_REGION) |>
+  summarise(
+    n          = n(),   # number of NRM-year observations
+    
+    # Run Pearson correlation
+    r          = cor(total_discharge, mean_HC,                 
+                     use = "complete.obs"),
+    r_squared  = summary(lm(mean_HC ~ total_discharge))$r.squared,   # Extract R² from linear model
+    slope      = coef(lm(mean_HC ~ total_discharge))[2],              #Extract regression slope (% HC per ML)
+    p_value    = summary(lm(mean_HC ~ total_discharge))$coefficients[2, 4],  #Extract p-value for slope
+    .groups    = "drop"
+  ) |>
+  mutate(
+    # Flag significance at 0.05 
+    significant = if_else(p_value < 0.05, "Yes", "No"),
+    # Round values for clean display
+    across(c(r, r_squared, slope), ~ round(.x, 3)),
+    p_value     = round(p_value, 4)
+  )
+
+# Note: a negative slope means higher discharge years correspond to lower HC cover.
+print(discharge_stats)
+```
+
+## SAVE FIGURES
+```{r}
+# Width = 8 inches, Height = 12 inches, DPI = 300 (publication-quality output)
 
 tmap_save(
   fig1,
@@ -258,5 +447,37 @@ tmap_save(
   fig3,
   here("outputs/fig3_HC_change.png"),
   width = 8, height = 12, dpi = 300
+)
+
+ggsave(
+  here("outputs/fig4_STARTING_HC_boxplot_by_NRM.png"),
+  plot   = fig4,
+  width  = 10,
+  height = 6,
+  dpi    = 300
+)
+
+ggsave(
+  here("outputs/fig5_END_HC_boxplot_by_NRM.png"),
+  plot   = fig5,
+  width  = 10,
+  height = 6,
+  dpi    = 300
+)
+
+ggsave(
+  here("outputs/fig6_avg_HC_change_by_NRM.png"),
+  plot   = fig6,
+  width  = 10,
+  height = 6,
+  dpi    = 300
+)
+
+ggsave(
+  here("outputs/fig7_discharge_vs_HC_by_NRM.png"),
+  plot   = fig7,
+  width  = 12,
+  height = 8,
+  dpi    = 300
 )
 ```
