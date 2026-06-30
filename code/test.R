@@ -128,7 +128,6 @@ all_reefs <- all_reefs |>
 
 print(all_reefs)
 
-
 # ══════════════════════════════════════════════════════════════
 #   CREATE DATASET TO COMPARE ANNUAL DISCHARGE TO HC
 # ══════════════════════════════════════════════════════════════

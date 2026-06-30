@@ -37,7 +37,9 @@ library(sf)
 
 #   ALWAYS: Put each dataset in a tibble and each variable in a column.
 
-# Import Data
+# ══════════════════════════════════════════════════════════════
+#    IMPORT DATA
+# ══════════════════════════════════════════════════════════════
 
 ## all.reef.csv: contains HC (hard coral cover) measures 
 all_reefs <- read_csv(
@@ -76,7 +78,7 @@ coral <- coral |>
 # (can happen if no coordinates were ever taken for reef such as Middle Rf LTMP)
 still_na <- coral |>
   filter(is.na(LATITUDE) | is.na(LONGITUDE)) |>
-  distinct(REEF, DEPTH)             # one row per unfillable site
+  distinct(REEF, DEPTH)            
 
 cat("After   NA LATITUDE :", sum(is.na(coral$LATITUDE)),  "\n")
 cat("After   NA LONGITUDE:", sum(is.na(coral$LONGITUDE)), "\n")
@@ -160,7 +162,7 @@ print(discharge_HC)   # check structure
 # ══════════════════════════════════════════════════════════════
 #    CALCULATE AVERAGE CHANGE IN HC (hard coral cover)
 # ══════════════════════════════════════════════════════════════
-# Create function to return slope from a simple linear regression y ~ x.
+# Create function to extract slope from a simple linear regression y ~ x.
 # Used to estimate the average annual change in HC.
 
 lm_slope <- function(x, y) {
